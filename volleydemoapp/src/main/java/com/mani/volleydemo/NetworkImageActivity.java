@@ -69,7 +69,7 @@ import com.mani.volleydemo.util.BitmapUtil;
  *
  */
 
-public class NetworkImageActivity extends Activity {
+public class NetworkImageActivity extends Activity implements View.OnClickListener {
 
 	private Button mTrigger;
 	private RequestQueue mVolleyQueue;
@@ -86,7 +86,18 @@ public class NetworkImageActivity extends Activity {
 	private ImageLoader mImageLoader2;
 	
 	private final String TAG_REQUEST = "MY_TAG";
-	
+	String testUrlToDownloadImage1 = "http://img.netbian.com/file/2018/1105/d0b56b378c98bf2de7c8457b82ea0259.jpg";
+	String testUrlToDownloadImage22 = "http://img.netbian.com/file/2018/1017/e9ecf76ba0d6b38de16d309808698c83.jpg";
+	String testUrlToDownloadImage2 = "https://gss0.baidu.com/-fo3dSag_xI4khGko9WTAnF6hhy/zhidao/wh%3D600%2C800/sign=4345736da586c91708565a3ff90d5cf7/2fdda3cc7cd98d10d7669ba4233fb80e7aec90f1.jpg";
+
+	// 获取到可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
+	// LruCache通过构造函数传入缓存值，以KB为单位。
+	int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+	// 使用最大可用内存值的1/8作为缓存的大小。
+	int cacheSize = maxMemory / 8;
+
+	int max_cache_size = 10000000;
+
 	private class DataModel {
 		private String mImageUrl;
 		private String mTitle;
@@ -107,6 +118,7 @@ public class NetworkImageActivity extends Activity {
 	}
 
 	JsonObjectRequest jsonObjRequest;
+	BitmapLruCache mBitmapLruCache;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -118,8 +130,7 @@ public class NetworkImageActivity extends Activity {
 		// Initialise Volley Request Queue. 
 		mVolleyQueue = Volley.newRequestQueue(this);
 
-		int max_cache_size = 1000000;
-
+		findViewById(R.id.button).setOnClickListener(this);
 		mDataList = new ArrayList<DataModel>();
 		mListView = (ListView) findViewById(R.id.image_list);
 		mImageView1 = (ImageView) findViewById(R.id.imageview1);
@@ -136,9 +147,9 @@ public class NetworkImageActivity extends Activity {
 				makeSampleHttpRequest();
 			}
 		});
-		
-		String testUrlToDownloadImage1 = "http://img.netbian.com/file/2018/1105/d0b56b378c98bf2de7c8457b82ea0259.jpg";
-		String testUrlToDownloadImage2 = "http://img.netbian.com/file/2018/1017/e9ecf76ba0d6b38de16d309808698c83.jpg";
+
+
+		mBitmapLruCache = new BitmapLruCache(max_cache_size);
 
 		mImageLoader = new ImageLoader(mVolleyQueue, new DiskBitmapCache(getCacheDir(),max_cache_size));
 		mImageLoader.get(testUrlToDownloadImage1,
@@ -148,15 +159,10 @@ public class NetworkImageActivity extends Activity {
 				50, 50);
 
 
-		// 获取到可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
-		// LruCache通过构造函数传入缓存值，以KB为单位。
-		int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-		// 使用最大可用内存值的1/8作为缓存的大小。
-		int cacheSize = maxMemory / 8;
-		mImageLoader2 = new ImageLoader(mVolleyQueue, new BitmapLruCache(cacheSize));
+		mImageLoader2 = new ImageLoader(mVolleyQueue, mBitmapLruCache);
 		mImageLoader2.get(testUrlToDownloadImage2, new FadeInImageListener(mImageView2,this));
 
-		ImageRequest imgRequest = new ImageRequest(testUrlToDownloadImage2, new Response.Listener<Bitmap>() {
+		/*ImageRequest imgRequest = new ImageRequest(testUrlToDownloadImage2, new Response.Listener<Bitmap>() {
 				@Override
 				public void onResponse(Bitmap response) {
 					mImageView3.setImageBitmap(response);
@@ -169,7 +175,22 @@ public class NetworkImageActivity extends Activity {
 			});
 		mVolleyQueue.add(imgRequest);
 
-		mNetworkImageView.setImageUrl(testUrlToDownloadImage1, mImageLoader);
+		mNetworkImageView.setImageUrl(testUrlToDownloadImage1, mImageLoader);*/
+	}
+
+	@Override
+	public void onClick(View v) {
+		mImageLoader = new ImageLoader(mVolleyQueue, new DiskBitmapCache(getCacheDir(),max_cache_size));
+		mImageLoader.get(testUrlToDownloadImage1,
+				ImageLoader.getImageListener(mImageView1,
+						R.drawable.flickr,
+						android.R.drawable.ic_dialog_alert),
+				50, 50);
+
+
+
+		mImageLoader2 = new ImageLoader(mVolleyQueue, mBitmapLruCache);
+		mImageLoader2.get(testUrlToDownloadImage2, new FadeInImageListener(mImageView2,this));
 	}
 
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)

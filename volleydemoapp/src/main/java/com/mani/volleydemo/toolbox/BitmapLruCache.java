@@ -44,12 +44,16 @@ public class BitmapLruCache extends LruCache<String,Bitmap> implements ImageCach
     @Override
     public Bitmap getBitmap(String url) {
     	System.out.println("######## BitmapLruCache GET ######## "+url);
-        return (Bitmap)get(url);
+    	Bitmap bitmap = get(url);
+        return bitmap;
     }
  
     @Override
     public void putBitmap(String url, Bitmap bitmap) {
     	System.out.println("######## BitmapLruCache PUT ######## "+url);
+    	if(bitmap == null){
+            String dd = "";
+        }
         put(url, bitmap);
     }
 }
