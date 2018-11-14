@@ -35,11 +35,11 @@ public class BitmapLruCache extends LruCache<String,Bitmap> implements ImageCach
         super(maxSize);
         //or setLimit(Runtime.getRuntime().maxMemory()/4);
     }
-    
-    /*@Override
+
+    @Override
     protected int sizeOf(String key, Bitmap value) {
-        return value.getRowBytes() * value.getHeight();
-    }*/
+        return value.getByteCount();
+    }
  
     @Override
     public Bitmap getBitmap(String url) {

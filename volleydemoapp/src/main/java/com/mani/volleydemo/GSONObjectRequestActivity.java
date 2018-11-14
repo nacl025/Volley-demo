@@ -60,6 +60,7 @@ import com.android.volley.toolbox.Volley;
 import com.mani.volleydemo.model.FlickrImage;
 import com.mani.volleydemo.model.FlickrResponse;
 import com.mani.volleydemo.model.FlickrResponsePhotos;
+import com.mani.volleydemo.toolbox.DiskBitmapCache;
 import com.mani.volleydemo.toolbox.GsonRequest;
 import com.mani.volleydemo.util.BitmapUtil;
 
@@ -99,37 +100,7 @@ public class GSONObjectRequestActivity extends Activity {
 			this.mTitle = mTitle;
 		}
 	}
-	
-	/*
-	 * Extends from DisckBasedCache --> Utility from volley toolbox.
-	 * Also implements ImageCache, so that we can pass this custom implementation
-	 * to ImageLoader. 
-	 */
-	public  class DiskBitmapCache extends DiskBasedCache implements ImageCache {
-		 
-	    public DiskBitmapCache(File rootDirectory, int maxCacheSizeInBytes) {
-	        super(rootDirectory, maxCacheSizeInBytes);
-	    }
-	 
-	    public DiskBitmapCache(File cacheDir) {
-	        super(cacheDir);
-	    }
-	 
-	    public Bitmap getBitmap(String url) {
-	        final Entry requestedItem = get(url);
-	 
-	        if (requestedItem == null)
-	            return null;
-	 
-	        return BitmapFactory.decodeByteArray(requestedItem.data, 0, requestedItem.data.length);
-	    }
-	 
-	    public void putBitmap(String url, Bitmap bitmap) {
-	    	final Entry entry = new Entry();
-	        entry.data = BitmapUtil.convertBitmapToBytes(bitmap) ;
-	        put(url, entry);
-	    }
-	}
+
 	
 	GsonRequest<FlickrResponsePhotos> gsonObjRequest;
 	

@@ -57,6 +57,8 @@ import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.NetworkImageView;
 import com.android.volley.toolbox.Volley;
+import com.mani.volleydemo.toolbox.BitmapLruCache;
+import com.mani.volleydemo.toolbox.DiskBitmapCache;
 import com.mani.volleydemo.toolbox.FadeInImageListener;
 import com.mani.volleydemo.util.BitmapUtil;
 
@@ -81,6 +83,7 @@ public class NetworkImageActivity extends Activity {
 	private List<DataModel> mDataList;
 	
 	private ImageLoader mImageLoader;
+	private ImageLoader mImageLoader2;
 	
 	private final String TAG_REQUEST = "MY_TAG";
 	
@@ -102,65 +105,7 @@ public class NetworkImageActivity extends Activity {
 		}
 		
 	}
-	
-	public class BitmapCache extends LruCache<String,Bitmap> implements ImageCache {
-	    public BitmapCache(int maxSize) {
-	        super(maxSize);
-	    }
-	 
-	    @Override
-	    public Bitmap getBitmap(String url) {
-	        return (Bitmap)get(url);
-	    }
-	 
-	    @Override
-	    public void putBitmap(String url, Bitmap bitmap) {
-	        put(url, bitmap);
-	    }
-	}
-	
-	/*
-	 * Extends from DisckBasedCache --> Utility from volley toolbox.
-	 * Also implements ImageCache, so that we can pass this custom implementation
-	 * to ImageLoader. 
-	 */
-	public  class DiskBitmapCache extends DiskBasedCache implements ImageCache {
-		 
-	    public DiskBitmapCache(File rootDirectory, int maxCacheSizeInBytes) {
-	        super(rootDirectory, maxCacheSizeInBytes);
-	    }
-	 
-	    public DiskBitmapCache(File cacheDir) {
-	        super(cacheDir);
-	    }
-	 
-	    public Bitmap getBitmap(String url) {
-	        final Entry requestedItem = get(url);
-	 
-	        if (requestedItem == null)
-	            return null;
-	 
-	        return BitmapFactory.decodeByteArray(requestedItem.data, 0, requestedItem.data.length);
-	    }
-	 
-	    public void putBitmap(String url, Bitmap bitmap) {
-	        
-	    	final Entry entry = new Entry();
-	        
-/*			//Down size the bitmap.If not done, OutofMemoryError occurs while decoding large bitmaps.
- 			// If w & h is set during image request ( using ImageLoader ) then this is not required.
-	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			Bitmap downSized = BitmapUtil.downSizeBitmap(bitmap, 50);
-			
-			downSized.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-			byte[] data = baos.toByteArray();
-	        entry.data = data ; */
-			
-	        entry.data = BitmapUtil.convertBitmapToBytes(bitmap) ;
-	        put(url, entry);
-	    }
-	}
-	
+
 	JsonObjectRequest jsonObjRequest;
 	
 	@Override
@@ -174,23 +119,16 @@ public class NetworkImageActivity extends Activity {
 		mVolleyQueue = Volley.newRequestQueue(this);
 
 		int max_cache_size = 1000000;
-		mImageLoader = new ImageLoader(mVolleyQueue, new DiskBitmapCache(getCacheDir(),max_cache_size));
-		
-		//Memorycache is always faster than DiskCache. Check it our for yourself.
-		//mImageLoader = new ImageLoader(mVolleyQueue, new BitmapCache(max_cache_size));
 
 		mDataList = new ArrayList<DataModel>();
-		
 		mListView = (ListView) findViewById(R.id.image_list);
 		mImageView1 = (ImageView) findViewById(R.id.imageview1);
 		mImageView2 = (ImageView) findViewById(R.id.imageview2);
 		mImageView3 = (ImageView) findViewById(R.id.imageview3);
 		mNetworkImageView = (NetworkImageView) findViewById(R.id.networkimageview);
 		mTrigger = (Button) findViewById(R.id.send_http);
-		
 		mAdapter = new EfficientAdapter(this);
 		mListView.setAdapter(mAdapter);
-
 		mTrigger.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -201,29 +139,23 @@ public class NetworkImageActivity extends Activity {
 		
 		String testUrlToDownloadImage1 = "http://img.netbian.com/file/2018/1105/d0b56b378c98bf2de7c8457b82ea0259.jpg";
 		String testUrlToDownloadImage2 = "http://img.netbian.com/file/2018/1017/e9ecf76ba0d6b38de16d309808698c83.jpg";
-			
-		/* Demonstrating 3 ways of image downloading.
-		  1 - Using ImageLoader and passing a url and imageListener. Additionally u can pass w & h
-		  2 - User NetworkImageView and pass a url & ImageLoader
-		  
-		  The above 2 uses underlying 'ImageRequest' to initiate the download.
-		  3 - Directly use ImageRequest api, by passing url, w & h, listeners, and BitmapConfig
-		  It has default retry mechanism i set to 2 maximum retries.
-		*/
 
-		//1) In case you are showing image as user icon normally 50x50, you can specify the width & height.
-        mImageLoader.get(testUrlToDownloadImage1, 
-							ImageLoader.getImageListener(mImageView1, 
-															R.drawable.flickr, 
-															android.R.drawable.ic_dialog_alert),
-							//You can specify width & height of the bitmap to be scaled down when the image is downloaded.
-							50,50);
+		mImageLoader = new ImageLoader(mVolleyQueue, new DiskBitmapCache(getCacheDir(),max_cache_size));
+		mImageLoader.get(testUrlToDownloadImage1,
+				ImageLoader.getImageListener(mImageView1,
+						R.drawable.flickr,
+						android.R.drawable.ic_dialog_alert),
+				50, 50);
 
-        //1 & 2) are almost same. Demonstrating you can apply animations while showing the downloaded image.
-        // You can use nice entry animations while showing images in a listview.Uses custom implemented 'FadeInImageListener'.
-		mImageLoader.get(testUrlToDownloadImage2, new FadeInImageListener(mImageView2,this));
-		
-		//3)
+
+		// 获取到可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
+		// LruCache通过构造函数传入缓存值，以KB为单位。
+		int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+		// 使用最大可用内存值的1/8作为缓存的大小。
+		int cacheSize = maxMemory / 8;
+		mImageLoader2 = new ImageLoader(mVolleyQueue, new BitmapLruCache(cacheSize));
+		mImageLoader2.get(testUrlToDownloadImage2, new FadeInImageListener(mImageView2,this));
+
 		ImageRequest imgRequest = new ImageRequest(testUrlToDownloadImage2, new Response.Listener<Bitmap>() {
 				@Override
 				public void onResponse(Bitmap response) {
@@ -236,10 +168,8 @@ public class NetworkImageActivity extends Activity {
 				}
 			});
 		mVolleyQueue.add(imgRequest);
-		
-		//4)
-		mNetworkImageView.setImageUrl(testUrlToDownloadImage1, mImageLoader);
 
+		mNetworkImageView.setImageUrl(testUrlToDownloadImage1, mImageLoader);
 	}
 
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
