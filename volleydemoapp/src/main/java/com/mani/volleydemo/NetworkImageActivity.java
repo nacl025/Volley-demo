@@ -199,8 +199,8 @@ public class NetworkImageActivity extends Activity {
 			}
 		});
 		
-		String testUrlToDownloadImage1 = "https://farm3.static.flickr.com/2833/9112621564_32bdfd58f3_q.jpg";
-		String testUrlToDownloadImage2 = "https://farm3.static.flickr.com/2848/9110760994_c8dc834397_q.jpg";
+		String testUrlToDownloadImage1 = "http://img.netbian.com/file/2018/1105/d0b56b378c98bf2de7c8457b82ea0259.jpg";
+		String testUrlToDownloadImage2 = "http://img.netbian.com/file/2018/1017/e9ecf76ba0d6b38de16d309808698c83.jpg";
 			
 		/* Demonstrating 3 ways of image downloading.
 		  1 - Using ImageLoader and passing a url and imageListener. Additionally u can pass w & h
