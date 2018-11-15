@@ -16,25 +16,15 @@
 
 package com.mani.volleydemo;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -50,9 +40,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.DiskBasedCache;
 import com.android.volley.toolbox.ImageLoader;
-import com.android.volley.toolbox.ImageLoader.ImageCache;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.NetworkImageView;
@@ -60,7 +48,13 @@ import com.android.volley.toolbox.Volley;
 import com.mani.volleydemo.toolbox.BitmapLruCache;
 import com.mani.volleydemo.toolbox.DiskBitmapCache;
 import com.mani.volleydemo.toolbox.FadeInImageListener;
-import com.mani.volleydemo.util.BitmapUtil;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -87,12 +81,12 @@ public class NetworkImageActivity extends Activity implements View.OnClickListen
 	
 	private final String TAG_REQUEST = "MY_TAG";
 	String testUrlToDownloadImage1 = "http://img.netbian.com/file/2018/1105/d0b56b378c98bf2de7c8457b82ea0259.jpg";
-	String testUrlToDownloadImage22 = "http://img.netbian.com/file/2018/1017/e9ecf76ba0d6b38de16d309808698c83.jpg";
-	String testUrlToDownloadImage2 = "https://gss0.baidu.com/-fo3dSag_xI4khGko9WTAnF6hhy/zhidao/wh%3D600%2C800/sign=4345736da586c91708565a3ff90d5cf7/2fdda3cc7cd98d10d7669ba4233fb80e7aec90f1.jpg";
+	String testUrlToDownloadImage2 = "http://img.netbian.com/file/2018/1017/e9ecf76ba0d6b38de16d309808698c83.jpg";
+	String testUrlToDownloadImage23 = "https://gss0.baidu.com/-fo3dSag_xI4khGko9WTAnF6hhy/zhidao/wh%3D600%2C800/sign=4345736da586c91708565a3ff90d5cf7/2fdda3cc7cd98d10d7669ba4233fb80e7aec90f1.jpg";
 
 	// 获取到可用内存的最大值，使用内存超出这个值会引起OutOfMemory异常。
 	// LruCache通过构造函数传入缓存值，以KB为单位。
-	int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+	int maxMemory = (int) (Runtime.getRuntime().maxMemory());
 	// 使用最大可用内存值的1/8作为缓存的大小。
 	int cacheSize = maxMemory / 8;
 
@@ -149,7 +143,7 @@ public class NetworkImageActivity extends Activity implements View.OnClickListen
 		});
 
 
-		mBitmapLruCache = new BitmapLruCache(max_cache_size);
+		mBitmapLruCache = new BitmapLruCache(cacheSize);
 
 		mImageLoader = new ImageLoader(mVolleyQueue, new DiskBitmapCache(getCacheDir(),max_cache_size));
 		mImageLoader.get(testUrlToDownloadImage1,
@@ -162,7 +156,7 @@ public class NetworkImageActivity extends Activity implements View.OnClickListen
 		mImageLoader2 = new ImageLoader(mVolleyQueue, mBitmapLruCache);
 		mImageLoader2.get(testUrlToDownloadImage2, new FadeInImageListener(mImageView2,this));
 
-		/*ImageRequest imgRequest = new ImageRequest(testUrlToDownloadImage2, new Response.Listener<Bitmap>() {
+		ImageRequest imgRequest = new ImageRequest(testUrlToDownloadImage2, new Response.Listener<Bitmap>() {
 				@Override
 				public void onResponse(Bitmap response) {
 					mImageView3.setImageBitmap(response);
@@ -175,7 +169,7 @@ public class NetworkImageActivity extends Activity implements View.OnClickListen
 			});
 		mVolleyQueue.add(imgRequest);
 
-		mNetworkImageView.setImageUrl(testUrlToDownloadImage1, mImageLoader);*/
+		mNetworkImageView.setImageUrl(testUrlToDownloadImage1, mImageLoader);
 	}
 
 	@Override

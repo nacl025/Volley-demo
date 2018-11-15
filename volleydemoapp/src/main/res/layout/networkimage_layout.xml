@@ -54,4 +54,12 @@
         android:dividerHeight="1dp"
         android:layout_below="@id/send_http"/>
 
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/imageview3"
+        android:layout_centerHorizontal="true"
+        android:text="Button" />
+
 </RelativeLayout>
